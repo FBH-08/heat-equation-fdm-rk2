@@ -1,0 +1,15 @@
+# Heat Equation Solver
+
+## Overview
+A standard solver of the 1D Heat Equation utilising Numpy. This project demonstrates the effectiveness of FDM and RK-2.
+
+**Key Features**
+- **FDM_RK2 Solver:** Solves the given initial conditions problem with order-2 accuracy.
+- **Error_analysis:** Contains the function to calculate L_infinity norm and the order of convergence of errors.
+- **Plotter:** Contains a function that utilises matplotlib to visually show the change in temperature and order of the error.
+
+## Technical Implementation
+- **Language:** Python 3.11.4 (Used for some libraries that are not updated to 3.14.)
+- **Math Logic:** - Implements the standard Finite Difference Method with Central Difference for the second order and forward difference for the first order. And standard RK2, Heun's method, to minimise error.
+  
+
