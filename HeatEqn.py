@@ -32,15 +32,16 @@ def error_analysis(u, u_exact, M, prev_error) -> tuple[float, float]:
         order = np.log(prev_error / max_error) / np.log(2)
     return max_error, order
 
-def plot_results(L, x, u, u_exact, ms, errors):
+def plot_results(L, x, u, u_exact, u_initial, ms, errors):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
     # Plot 1: Solution Comparison (Final M)
-    ax1.plot(x, u, 'yo-', label='Numerical (FDM-RK2)', markersize=2)
-    ax1.plot(x, u_exact, 'r--', label='Exact Solution', markersize=10)
+    ax1.plot(x,u_initial,'b-',label = 'Initial Conditions', markersize = 3 )
+    ax1.plot(x, u_exact, 'yo-', label='Exact Solution', markersize=2)
+    ax1.plot(x, u, 'r--', label='Numerical (FDM-RK2)', markersize=10)
     ax1.set_title(f"Solution at T_final (M={len(x)-1})")
-    ax1.set_xlabel("x")
-    ax1.set_ylabel("u(x, t)")
+    ax1.set_xlabel("x (in meters)")
+    ax1.set_ylabel("u(x, t) (in kelvin)")
     ax1.legend()
     ax1.grid(True)
 
@@ -82,19 +83,23 @@ def FDM_RK2(L,T,M, alpha, u):
         u_new[0] = u[0]
         u_new[M] = u[M]
 
-        for j in range(1,M):
-            u_star[j] = u[j] + alpha * dt * (u[j+1]- 2*u[j] + u [j-1])/dx**2
+        #for j in range(1,M):
+           # u_star[j] = u[j] + alpha * dt * (u[j+1]- 2*u[j] + u [j-1])/dx**2
         
-        for i in range(1,M):
+        #vectorised the previous for loops, it used to take amost 190 sec for M = 1280 divisions
+        # Now it only takes 2 seconds!!!!
 
-            #2. Now calculate the RK slopes
+        u_star[1:-1] = u[1:-1] + alpha * dt * (u[2:]-2*u[1:-1]+u[:-2])/dx**2
+        
 
-            k1 = alpha*(u[i+1]-2*u[i]+u[i-1])/dx**2
+        #2. Now calculate the RK slopes
 
-            k2 = alpha* (u_star[i+1] - 2*u_star[i] + u_star[i-1])/dx**2
+        k1 = alpha*(u[2:]-2*u[1:-1]+u[:-2])/dx**2
 
-            #3. now calculate the new u values
-            u_new[i] = u[i] + 0.5 * dt * (k1 + k2)
+        k2 = alpha* (u_star[2:] - 2*u_star[1:-1] + u_star[:-2])/dx**2
+
+        #3. now calculate the new u values
+        u_new[1:-1] = u[1:-1] + 0.5 * dt * (k1 + k2)
         
         #update all the values for the next time step
         u, u_new = u_new, u
@@ -104,7 +109,7 @@ def FDM_RK2(L,T,M, alpha, u):
 
 if __name__ == "__main__":
     L = 1.0
-    T_final = 0.1
+    T_final = 0.05
     alpha = 1.0
 
     ms, errors = [], []
@@ -116,16 +121,18 @@ if __name__ == "__main__":
 
     #So that the variables are not "possibly unbound" when we try to print them later
     u = None
+    u_initial = None
     u_exact = None
     u_final = None
     x = None
     comp_time = 0.0
 
-    for M in [10, 20, 40, 80, 160, 320]:
+    for M in [10, 20, 40, 80, 160, 320, 640, 1280]:
 
         x = np.linspace(0, L, M + 1)
         
         # Initial Condition
+        u_initial = np.sin(np.pi * np.linspace(0, L, M + 1))
         u = np.sin(np.pi * np.linspace(0, L, M + 1))
 
         u, comp_time = FDM_RK2(L, T_final, M, alpha, u)
@@ -147,4 +154,4 @@ if __name__ == "__main__":
         prev_error = max_error
     
     # Plot results for the finest grid
-    plot_results(L, x, u, u_exact, ms, errors)
+    plot_results(L, x, u, u_exact, u_initial, ms, errors)
