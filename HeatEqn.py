@@ -4,13 +4,15 @@ import time
 
 
 #Calculate the error and order of convergence
-def error_analysis(u, u_exact, M, prev_error) -> tuple[float, float]:
+def error_analysis(u, u_exact, M, prev_error):
     error = np.zeros(M + 1)
     for i in range(M + 1):
         error[i] = u[i] - u_exact[i]
 
     max_error = np.max(np.abs(error))
 
+
+    #assuming sample space doubles everytime
     order = 0.0
     if prev_error > 1e-15:
         order = np.log(prev_error / max_error) / np.log(2)
@@ -24,13 +26,6 @@ def timer(func):
         end = time.perf_counter()
         return result, (end-start)
     return new_func
-
-def error_analysis(u, u_exact, M, prev_error) -> tuple[float, float]:
-    max_error = np.max(np.abs(u - u_exact)) # Vectorized for speed
-    order = 0.0
-    if prev_error > 1e-15:
-        order = np.log(prev_error / max_error) / np.log(2)
-    return max_error, order
 
 def plot_results(L, x, u, u_exact, u_initial, ms, errors):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -106,6 +101,26 @@ def FDM_RK2(L,T,M, alpha, u):
     
     return u
 
+# Function to get the exact solution for the square wave as the initial condition.
+def get_exact_square_wave(x, t, L, alpha, terms=200):
+    u_bg = 273.0
+    u_high = 373.0
+    a, b = 0.4 * L, 0.6 * L  # Bounds of the square wave
+    
+    # Start with the background temperature
+    u_exact = np.full_like(x, u_bg)
+    
+    for n in range(1, terms + 1):
+        # Calculate the Fourier coefficient Bn
+        bn = (2 * (u_high - u_bg) / (n * np.pi)) * (np.cos(n * np.pi * a / L) - np.cos(n * np.pi * b / L))
+        
+        # Calculate the temporal decay for this specific frequency
+        decay = np.exp(-alpha * (n * np.pi / L)**2 * t)
+        
+        # Add the nth harmonic to the solution
+        u_exact += bn * np.sin(n * np.pi * x / L) * decay
+        
+    return u_exact
 
 if __name__ == "__main__":
     L = 1.0
@@ -130,17 +145,24 @@ if __name__ == "__main__":
     for M in [10, 20, 40, 80, 160, 320, 640, 1280]:
 
         x = np.linspace(0, L, M + 1)
-        
-        # Initial Condition
-        u_initial = np.sin(np.pi * np.linspace(0, L, M + 1))
-        u = np.sin(np.pi * np.linspace(0, L, M + 1))
+
+    # Initial Condition (Square-wave). Order of convergence = 1 
+        u = np.where((x>0.4*L) & (x<0.6*L), 373.0, 273.0)
+        u_initial = np.copy(u)
+        # Exact Solution
+        u_exact = get_exact_square_wave(x,T_final, L, alpha)
+
+# Order Reduction: Learened that the order of convergence is dependent on the smoothness of initial conditions used. For example the order drops to 1 when I use a square-wave.
+
+    # Initial Condition (Sin-wave). Order of convergence = 2
+        u_initial = np.sin(np.pi * np.linspace(0, L, M + 1)) + 273
+        u = np.sin(np.pi * np.linspace(0, L, M + 1)) + 273
+        # Exact Solution
+        u_exact = np.sin(np.pi * np.linspace(0, L, M + 1)) * np.exp(-alpha * (np.pi/L ** 2) * T_final) + 273
 
         u, comp_time = FDM_RK2(L, T_final, M, alpha, u)
 
-        # Exact Solution
-        u_exact = np.sin(np.pi * np.linspace(0, L, M + 1)) * np.exp(-alpha * (np.pi ** 2) * T_final)
-
-        #calculate error and order
+    #calculate error and order
         max_error, order = error_analysis(u, u_exact, M, prev_error)
 
         ms.append(M)
