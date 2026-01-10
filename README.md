@@ -14,7 +14,7 @@ The solver addresses the heat equation
 $\frac{\partial u}{\partial t}
 
 ## Technical Implementation
-- **Language:** Python 3.11.4 (Used for some libraries that are not updated to 3.14.)
+- **Language:** Python 3.11.4 (Used because my pre-existing environment uses it)
 - **Math Logic:** - Implements the standard Fite Difference Method with Central Difference for the second order and forward difference for the first order. And standard RK2, Heun's method, to minimise error.
   
 
