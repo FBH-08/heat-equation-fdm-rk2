@@ -11,7 +11,7 @@ A standard solver of the 1D Heat Equation utilising Numpy. This project demonstr
 ## Mathematical Overview
 The solver addresses the heat equation
 
-$\frac{\partial u}{\partial t}
+$\frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}$
 
 ## Technical Implementation
 - **Language:** Python 3.11.4 (Used because my pre-existing environment uses it)
